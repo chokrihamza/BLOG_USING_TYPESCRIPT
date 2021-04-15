@@ -1,6 +1,24 @@
-//Project Management Class
+//Project Type
+enum ProjectSatus{
+      Active,
+      Finishid
+}
+class Project{
+      constructor(public id: string,
+            public title: string,
+            public decription: string,
+            public people: number,
+            public status:ProjectSatus
+      
+      ) {
+            
+      }
+}
+//Project state Management Class
+ type Listener=(item:Project[])=>void
 class ProjectState{
-      private projects: any[] = [];
+      private listeners:Listener[] = [];
+      private projects: Project[] = [];
       private static instance: ProjectState;
       private constructor() {
             
@@ -12,15 +30,19 @@ class ProjectState{
             this.instance = new ProjectState();
             return this.instance
       }
+      addListeners(listenerFn:Listener) {
+            this.listeners.push(listenerFn);
+      }
       addProject(title:string,description:string,numOfPeople:number) {
-            const newProject = {
-                  id: Math.random().toString(),
-                  title: title,
-                  decription: description,
-                  people: numOfPeople,
-                  
-            };
+            const newProject = new Project(Math.random().toString(),
+                  title,
+                  description,
+                  numOfPeople,
+                  ProjectSatus.Active)
             this.projects.push(newProject);
+            for (const listenerFn of this.listeners) {
+                  listenerFn(this.projects.slice())
+            }
       }
 }
 
@@ -72,19 +94,36 @@ function autobind(_target: any, _methodName: string, descriptor: PropertyDescrip
       }
       return ajustedDescriptor
 }
+//
 //ProjectList Class
 class ProjectList{
       templateElement: HTMLTemplateElement;
       hostElement: HTMLDivElement;
       element: HTMLElement;
+      assignedProjects: Project[];
+
       constructor(private type:'active'|'finished') {
             this.templateElement = <HTMLTemplateElement>document.getElementById('project-list')!;
+
             this.hostElement = <HTMLDivElement>document.getElementById('app')!;
+            this.assignedProjects = [];
             const importedNode = document.importNode(this.templateElement.content, true);
             this.element = <HTMLElement>importedNode.firstElementChild;
             this.element.id = `${this.type}-projects`;
+            projectState.addListeners((projects:Project[]) => {
+                  this.assignedProjects = projects;
+                  this.renderProjects()
+            });
             this.attach();
             this.renderContent()
+      }
+      private renderProjects() {
+            const listEl = document.getElementById(`${this.type}-projects-list`)!;
+            for (const projItem of this.assignedProjects) {
+                  const listItem = document.createElement('li');
+                  listItem.textContent=projItem.title
+                  listEl.appendChild(listItem)
+            }
       }
       private renderContent() {
             const listId = `${this.type}-projects-list`;
@@ -158,9 +197,10 @@ class ProjectInput{
             const userInput = this.gatherUserInput()
             if (Array.isArray(userInput)) {
                   const [title, desc, people] = userInput;
-                  console.log(title,desc,people)
+                  projectState.addProject(title, desc, people);
+                 
+                  this.clearInput()
             }
-            this.clearInput()
       }
       
       private configure() {
