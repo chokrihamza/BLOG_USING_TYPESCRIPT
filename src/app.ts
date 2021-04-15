@@ -1,3 +1,30 @@
+//Project Management Class
+class ProjectState{
+      private projects: any[] = [];
+      private static instance: ProjectState;
+      private constructor() {
+            
+      }
+      static getInstance() {
+            if (this.instance) {
+                  return this.instance;
+            }
+            this.instance = new ProjectState();
+            return this.instance
+      }
+      addProject(title:string,description:string,numOfPeople:number) {
+            const newProject = {
+                  id: Math.random().toString(),
+                  title: title,
+                  decription: description,
+                  people: numOfPeople,
+                  
+            };
+            this.projects.push(newProject);
+      }
+}
+
+const projectState = ProjectState.getInstance();
 //Validation logic
 interface Validatable{
       value: string|number;
